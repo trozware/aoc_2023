@@ -1,17 +1,18 @@
 const { readFile } = require('./utils')
 
 const dayNum = 1
-const expectedTestResult1 = 1
-const expectedTestResult2 = 2
+const expectedTestResult1 = 142
+const expectedTestResult2 = 281
 
 const { runPart1, runPart2 } = require(`./scripts/day${dayNum}`)
-const testData = readFile(dayNum, 'test')
+const testData1 = readFile(dayNum, 'test1')
+const testData2 = readFile(dayNum, 'test2')
 const liveData = readFile(dayNum, 'data')
 
 let part1Done = false
 
 const part1 = () => {
-  const testResult = runPart1(testData)
+  const testResult = runPart1(testData1)
   if (testResult === expectedTestResult1) {
     console.log(`Test result ${testResult} passed!`)
     const liveResult = runPart1(liveData)
@@ -24,7 +25,7 @@ const part1 = () => {
 }
 
 const part2 = () => {
-  const testResult = runPart2(testData)
+  const testResult = runPart2(testData2)
   if (testResult === expectedTestResult2) {
     console.log(`Test result ${testResult} passed!`)
 

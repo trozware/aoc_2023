@@ -11,7 +11,10 @@ const convertToIntegers = data => {
   return data.map(line => parseInt(line))
 }
 
+const isDigit = char => char >= '0' && char <= '9'
+
 module.exports = {
   readFile,
   convertToIntegers,
+  isDigit,
 }

@@ -13,8 +13,13 @@ const convertToIntegers = data => {
 
 const isDigit = char => char >= '0' && char <= '9'
 
+const sumArray = array => {
+  return array.reduce((sum, value) => sum + value, 0)
+}
+
 module.exports = {
   readFile,
   convertToIntegers,
   isDigit,
+  sumArray,
 }

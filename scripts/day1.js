@@ -1,3 +1,5 @@
+const { sumArray } = require('../utils')
+
 const runPart1 = input => {
   let numbers = []
 
@@ -19,8 +21,10 @@ const runPart2 = input => {
     numbers.push(parseInt(calibration))
   }
 
-  const total = numbers.reduce((acc, curr) => acc + curr, 0)
+  const total = sumArray(numbers)
   return total
+
+  // 56397
 }
 
 const getNumberFromLine = line => {
@@ -35,6 +39,8 @@ const getNumberFromLine = line => {
 
   const number = digits[0] + digits[digits.length - 1]
   return number
+
+  // 55701
 }
 
 const convertWordsToDigits = line => {

@@ -1,4 +1,4 @@
-const { convertToIntegers } = require('../utils')
+const { sumArray } = require('../utils')
 
 const runPart1 = input => {
   const maxRed = 12
@@ -47,8 +47,10 @@ const runPart1 = input => {
     }
   }
 
-  let idSum = validGameIDs.reduce((acc, curr) => acc + curr, 0)
+  let idSum = sumArray(validGameIDs)
   return idSum
+
+  // 2617
 }
 
 const runPart2 = input => {
@@ -98,8 +100,10 @@ const runPart2 = input => {
     gamePowers.push(gamePower)
   }
 
-  let powerSum = gamePowers.reduce((acc, curr) => acc + curr, 0)
+  let powerSum = sumArray(gamePowers)
   return powerSum
+
+  // 59795
 }
 
 module.exports = {

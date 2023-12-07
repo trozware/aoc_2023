@@ -3,6 +3,9 @@ const fs = require('fs')
 const readFile = (dayNum, folder) => {
   const filePath = `./${folder}/day${dayNum}.txt`
   const fileContents = fs.readFileSync(filePath, 'utf8').trim()
+  if (fileContents === '') {
+    return undefined
+  }
   const data = fileContents.split('\n')
   return data
 }

@@ -20,9 +20,22 @@ const sumArray = array => {
   return array.reduce((sum, value) => sum + value, 0)
 }
 
+const gcd = (a, b) => {
+  if (b === 0) {
+    return a
+  }
+  return gcd(b, a % b)
+}
+
+const lcm = (a, b) => {
+  return (a * b) / gcd(a, b)
+}
+
 module.exports = {
   readFile,
   convertToIntegers,
   isDigit,
   sumArray,
+  gcd,
+  lcm,
 }

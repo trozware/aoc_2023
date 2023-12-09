@@ -31,6 +31,8 @@ const lcm = (a, b) => {
   return (a * b) / gcd(a, b)
 }
 
+const lastElement = array => array[array.length - 1]
+
 module.exports = {
   readFile,
   convertToIntegers,
@@ -38,4 +40,5 @@ module.exports = {
   sumArray,
   gcd,
   lcm,
+  lastElement,
 }

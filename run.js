@@ -1,8 +1,8 @@
 const { readFile } = require('./utils')
 
-const dayNum = 9
-const expectedTestResult1 = 114
-const expectedTestResult2 = 2
+const dayNum = 10
+const expectedTestResult1 = 8
+const expectedTestResult2 = 0
 
 const { runPart1, runPart2 } = require(`./scripts/day${dayNum}`)
 const testData1 = readFile(dayNum, 'test1')

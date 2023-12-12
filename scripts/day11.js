@@ -1,36 +1,15 @@
-const { convertToIntegers } = require('../utils')
-
 const runPart1 = input => {
-  const galaxies = locateGalaxies(input)
+  let grid = addRows(input)
+  grid = addCols(grid)
 
+  const galaxies = locateGalaxies(grid)
   const galaxyIDs = galaxies.map(g => g.id)
-
   const combinations = getCombinations(galaxyIDs)
-
-  const emptyRows = listEmptyRows(input)
-  const emptyCols = listEmptyCols(input)
 
   let totalDistance = 0
 
   for (const idPair of combinations) {
-    const [start, end] = idPair.split(',')
-    const startGalaxy = galaxies.find(g => g.id === parseInt(start))
-    const endGalaxy = galaxies.find(g => g.id === parseInt(end))
-
-    const rowsBeforeStart = emptyRows.filter(r => r < startGalaxy.r).length
-    const rowsBeforeEnd = emptyRows.filter(r => r < endGalaxy.r).length
-    const colsBeforeStart = emptyCols.filter(c => c < startGalaxy.c).length
-    const colsBeforeEnd = emptyCols.filter(c => c < endGalaxy.c).length
-
-    const startPointRow = startGalaxy.r + rowsBeforeStart
-    const startPointCol = startGalaxy.c + colsBeforeStart
-    const endPointRow = endGalaxy.r + rowsBeforeEnd
-    const endPointCol = endGalaxy.c + colsBeforeEnd
-
-    const distance =
-      Math.abs(startPointRow - endPointRow) +
-      Math.abs(startPointCol - endPointCol)
-
+    const distance = distanceBetween(idPair, galaxies)
     totalDistance += distance
   }
 
@@ -41,57 +20,53 @@ const runPart1 = input => {
 
 const runPart2 = input => {
   const galaxies = locateGalaxies(input)
-
   const galaxyIDs = galaxies.map(g => g.id)
-
   const combinations = getCombinations(galaxyIDs)
 
   const emptyRows = listEmptyRows(input)
   const emptyCols = listEmptyCols(input)
 
-  let totalDistance = 0
-  const multiplier = 1000000
+  let storedDistances = {}
 
   for (const idPair of combinations) {
+    const distance = distanceBetween(idPair, galaxies)
+    storedDistances[idPair] = distance
+  }
+
+  let totalDistance = 0
+  const adder = 1000000 - 1
+
+  for (const idPair of combinations) {
+    let distance = storedDistances[idPair]
+
     const [start, end] = idPair.split(',')
     const startGalaxy = galaxies.find(g => g.id === parseInt(start))
     const endGalaxy = galaxies.find(g => g.id === parseInt(end))
+    const lowestRow = Math.min(startGalaxy.r, endGalaxy.r)
+    const highestRow = Math.max(startGalaxy.r, endGalaxy.r)
+    const lowestCol = Math.min(startGalaxy.c, endGalaxy.c)
+    const highestCol = Math.max(startGalaxy.c, endGalaxy.c)
 
-    const rowsBeforeStart =
-      emptyRows.filter(r => r < startGalaxy.r).length * multiplier
-    const rowsBeforeEnd =
-      emptyRows.filter(r => r < endGalaxy.r).length * multiplier
-    const colsBeforeStart =
-      emptyCols.filter(c => c < startGalaxy.c).length * multiplier
-    const colsBeforeEnd =
-      emptyCols.filter(c => c < endGalaxy.c).length * multiplier
+    const rowsToInsert = emptyRows.filter(
+      r => r > lowestRow && r < highestRow,
+    ).length
+    const colsToInsert = emptyCols.filter(
+      c => c > lowestCol && c < highestCol,
+    ).length
 
-    const startPointRow = startGalaxy.r + rowsBeforeStart
-    const startPointCol = startGalaxy.c + colsBeforeStart
-    const endPointRow = endGalaxy.r + rowsBeforeEnd
-    const endPointCol = endGalaxy.c + colsBeforeEnd
-
-    const distance =
-      Math.abs(startPointRow - endPointRow) +
-      Math.abs(startPointCol - endPointCol)
+    for (let i = 0; i < rowsToInsert; i++) {
+      distance += adder
+    }
+    for (let i = 0; i < colsToInsert; i++) {
+      distance += adder
+    }
 
     totalDistance += distance
   }
 
-  // 10 * gives 1112 which is 82 higher than the expected 1030
-  // 100 * gives 8492 which is 82 higher than the expected 8410
-  const fudgeFactor = galaxies.length * galaxies.length + 1
-  console.log(fudgeFactor)
+  return totalDistance
 
-  return totalDistance - fudgeFactor
-
-  // 678626691469 is too high
-}
-
-const printGrid = grid => {
-  for (const line of grid) {
-    console.log(line)
-  }
+  // 678626199476
 }
 
 const addRows = grid => {
@@ -198,7 +173,7 @@ const distanceBetween = (idPair, galaxies) => {
   const distance =
     Math.abs(startGalaxy.r - endGalaxy.r) +
     Math.abs(startGalaxy.c - endGalaxy.c)
-  return { distance, startGalaxy, endGalaxy }
+  return distance
 }
 
 module.exports = {

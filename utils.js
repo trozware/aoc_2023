@@ -33,6 +33,20 @@ const lcm = (a, b) => {
 
 const lastElement = array => array[array.length - 1]
 
+const combinations = items => {
+  const size = 2n ** BigInt(items.length)
+  let results = []
+
+  for (let i = 0; i < size; i++) {
+    const cur = []
+    for (let j = 0; j < items.length; j++)
+      if ((i & (1 << j)) > 0) cur.push(items[j])
+    results.push(cur)
+  }
+
+  return results
+}
+
 module.exports = {
   readFile,
   convertToIntegers,
@@ -41,4 +55,5 @@ module.exports = {
   gcd,
   lcm,
   lastElement,
+  combinations,
 }

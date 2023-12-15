@@ -1,4 +1,4 @@
-const { convertToIntegers, lastElement } = require('../utils')
+const { convertToIntegers } = require('../utils')
 
 const runPart1 = input => {
   const { squares, rounds } = locateRocks(input)
@@ -13,16 +13,18 @@ const runPart1 = input => {
 }
 
 const runPart2 = input => {
-  // takes a while to run
+  // takes about 25 seconds to run
 
   const { squares, rounds } = locateRocks(input)
   const maxRow = input.length
   const maxCol = input[0].length
   const factor = 1000000000
 
+  // Increase the number of steps until a repeating pattern is found
+  const steps = 250
+
   let rotatedRounds = rounds
   let loadPerRotation = {}
-  const steps = 300
   let lastLoads = []
 
   for (let i = 0; i < steps; i++) {
@@ -35,17 +37,18 @@ const runPart2 = input => {
     }
   }
 
-  // previous code had shown that the pattern repeats every 26 steps
-  // or every 7 steps for the test data
-  let repeatInterval = 26
-  if (lastLoads[0] < 100) {
-    repeatInterval = 7
+  // console.log('lastLoads', lastLoads)
+
+  const repeatInterval = findRepeatInterval(loadPerRotation)
+  if (!repeatInterval) {
+    console.log('No repeating pattern found with current steps', steps)
+    return
   }
 
-  let offset = (factor - steps) % repeatInterval
-  let lastLoad = lastElement(lastLoads)
-  let firstIndex = lastLoads.indexOf(lastLoad)
-  let reqIndex = firstIndex + offset
+  const offset = (factor - steps) % repeatInterval
+  const moveBackBy = repeatInterval - offset
+  let reqIndex = lastLoads.length - moveBackBy - 1
+
   let reqLoad = lastLoads[reqIndex]
 
   return reqLoad
@@ -245,6 +248,35 @@ const sortByCol = rounds => {
     const lastB = parseInt(b.split(',').pop())
     return lastA - lastB
   })
+}
+
+const findRepeatInterval = loadPerRotation => {
+  let intervalsPerLoad = {}
+  let loads = new Set(Object.values(loadPerRotation))
+  for (const load of loads) {
+    const loadIndexes = Object.keys(loadPerRotation).filter(
+      l => loadPerRotation[l] === load,
+    )
+    if (loadIndexes.length < 5) {
+      continue
+    }
+
+    const diff1 = loadIndexes[1] - loadIndexes[0]
+    const diff2 = loadIndexes[2] - loadIndexes[1]
+    const diff3 = loadIndexes[3] - loadIndexes[2]
+    const diff4 = loadIndexes[4] - loadIndexes[3]
+
+    if (diff1 === diff2 && diff2 === diff3 && diff3 === diff4) {
+      intervalsPerLoad[load] = diff1
+    }
+  }
+
+  const intervals = new Set(Object.values(intervalsPerLoad))
+  if (intervals.size === 1) {
+    return intervals.values().next().value
+  }
+
+  return null
 }
 
 module.exports = {

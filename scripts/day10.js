@@ -40,6 +40,9 @@ const runPart2 = input => {
     pipes,
   )
 
+  const gridHeight = input.length
+  const gridWidth = input[0].length
+
   // let lastCount = Object.keys(pipes).length
   // let validPipes = pipes
   // while (true) {
@@ -84,7 +87,7 @@ const runPart2 = input => {
   }
 
   path.pop()
-  console.log(path)
+  // console.log(path)
 
   let unused = new Set(Object.keys(validPipes).filter(p => !path.includes(p)))
   for (const dot of dots) {
@@ -94,6 +97,7 @@ const runPart2 = input => {
 
   let nodesToLeft = new Set()
   let nodesToRight = new Set()
+  printPipes(validPipes, gridHeight, gridWidth, nodesToLeft, nodesToRight, path)
 
   for (let index = 0; index < path.length; index++) {
     let nextIndex = index + 1
@@ -104,38 +108,114 @@ const runPart2 = input => {
     if (prevIndex < 0) {
       prevIndex = path.length - 1
     }
+    const next = path[nextIndex]
+    const prev = path[prevIndex]
 
     const start = path[index]
     const [r, c] = start.split(',')
     const surrounds = surroundingNodes(parseInt(r), parseInt(c))
-    const next = path[nextIndex]
-    const prev = path[prevIndex]
+    const nextSurround = surrounds.indexOf(next)
+    const prevSurround = surrounds.indexOf(prev)
 
-    let startIndex = surrounds.indexOf(prev)
-    let endIndex = surrounds.indexOf(next)
-    for (let i = startIndex + 1; i <= endIndex; i++) {
-      const surround = surrounds[i]
-      // console.log(i, surround)
-      if (unused.has(surround)) {
-        nodesToLeft.add(surround)
+    let counter = 0
+    let nextNodeIndex = nextSurround
+    let metPrevNode = false
+
+    while (counter < 8) {
+      const nextNode = surrounds[nextNodeIndex]
+      if (nextNodeIndex === prevSurround) {
+        metPrevNode = true
       }
-    }
-    for (let i = endIndex - 1; i <= surrounds.length; i++) {
-      const surround = surrounds[i]
-      // console.log(i, surround)
-      if (unused.has(surround)) {
-        nodesToRight.add(surround)
+
+      if (unused.has(nextNode)) {
+        if (metPrevNode) {
+          nodesToLeft.add(nextNode)
+        } else {
+          nodesToRight.add(nextNode)
+        }
+        unused.delete(nextNode)
       }
+
+      nextNodeIndex++
+      if (nextNodeIndex >= 8) {
+        nextNodeIndex = 0
+      }
+      counter++
     }
   }
+  // printPipes(validPipes, gridHeight, gridWidth, nodesToLeft, nodesToRight)
+
+  // TODO: this is not filling the block in the middle
+  // fill in any remaining nodes surrounded by lefts or rights
+  // console.log(unused)
+  let unusedArr = Array.from(unused)
+
+  while (true) {
+    let foundMatch = false
+    for (const node of unusedArr) {
+      const [r, c] = node.split(',')
+      const surrounds = surroundingNodes(parseInt(r), parseInt(c))
+      const surroundedByLefts = surrounds.filter(s => nodesToLeft.has(s))
+      if (surroundedByLefts >= 5) {
+        nodesToLeft.add(node)
+        unused.delete(node)
+        foundMatch = true
+      }
+      const surroundedByRights = surrounds.filter(s => nodesToRight.has(s))
+      if (surroundedByRights >= 5) {
+        nodesToRight.add(node)
+        unused.delete(node)
+        foundMatch = true
+      }
+    }
+    if (!foundMatch) {
+      unusedArr = Array.from(unused)
+      break
+    }
+  }
+
+  const grid = printPipes(
+    validPipes,
+    gridHeight,
+    gridWidth,
+    nodesToLeft,
+    nodesToRight,
+    path,
+  )
 
   let nLeftArr = Array.from(nodesToLeft).sort()
   let nRightArr = Array.from(nodesToRight).sort()
 
-  console.log('left', nLeftArr.length)
-  console.log(nLeftArr)
-  console.log('right', nRightArr.length)
-  console.log(nRightArr)
+  // console.log('left', nLeftArr.length)
+  // console.log(nLeftArr)
+  // console.log('right', nRightArr.length)
+  // console.log(nRightArr)
+
+  const totalNodes = gridHeight * gridWidth
+  const totalLeft = nLeftArr.length
+  const totalRight = nRightArr.length
+  const pathLength = path.length
+
+  console.log('total', totalNodes)
+  console.log('left', totalLeft)
+  console.log('right', totalRight)
+  console.log('path', pathLength)
+  console.log('unused', unused.size)
+  console.log('total check', totalLeft + totalRight + pathLength + unused.size)
+
+  const countInts = countInternals(grid)
+  console.log('countInts', countInts)
+
+  return Math.min(totalLeft, totalRight)
+
+  // 196 too low
+  // 395 too high
+  // 1149 too high
+  // 395 - 140 = 255 - wrong
+
+  // 287
+
+  // Got by counting the nodes left unfilled in the center (91) and adding them to 196 which the code found.
 }
 
 const parseInput = input => {
@@ -274,6 +354,76 @@ const removeInvalidPipes = pipes => {
   }
 
   return validPipes
+}
+
+const countInternals = grid => {
+  let totalI = 0
+  let totalO = 0
+
+  const rows = grid.split('\n')
+  for (let row = 1; row < rows.length - 1; row++) {
+    const cols = rows[row].split('')
+    let startIndex = Math.max(rows[row].indexOf('='), 1)
+    let endIndex = Math.min(rows[row].lastIndexOf('='), cols.length - 1)
+
+    for (let col = startIndex; col < endIndex; col++) {
+      const symbol = cols[col]
+      if (symbol !== 'I' && symbol !== 'O') {
+        continue
+      }
+
+      const invalidNeighbors = [
+        rows[row - 1][col - 1],
+        rows[row - 1][col],
+        rows[row - 1][col + 1],
+        rows[row][col - 1],
+        rows[row][col + 1],
+        rows[row + 1][col - 1],
+        rows[row + 1][col],
+        rows[row + 1][col + 1],
+      ].filter(n => n !== '=' && n !== symbol)
+
+      if (invalidNeighbors.length === 0) {
+        if (symbol === 'I') {
+          totalI++
+        } else {
+          totalO++
+        }
+      }
+    }
+  }
+
+  return { totalI, totalO }
+}
+
+const printPipes = (
+  pipes,
+  gridHeight,
+  gridWidth,
+  nodesToLeft,
+  nodesToRight,
+  path,
+) => {
+  let gridStr = ''
+  for (let row = 0; row < gridHeight; row++) {
+    let rowStr = ''
+    for (let col = 0; col < gridWidth; col++) {
+      const coord = `${row},${col}`
+      if (nodesToLeft.has(coord)) {
+        rowStr += 'I'
+      } else if (nodesToRight.has(coord)) {
+        rowStr += 'O'
+      } else if (path && path.includes(coord)) {
+        rowStr += '='
+      } else {
+        rowStr += pipes[coord] ? pipes[coord].symbol : '.'
+      }
+    }
+    gridStr += rowStr + '\n'
+  }
+
+  console.log(gridStr)
+  return gridStr
 }
 
 module.exports = {

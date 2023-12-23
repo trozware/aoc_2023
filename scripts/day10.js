@@ -1,10 +1,8 @@
-const { lastElement } = require('../utils')
-
 const runPart1 = input => {
   const { pipes, sLocation } = parseInput(input)
   pipes[`${sLocation.row},${sLocation.col}`].connections = connectionsForS(
     sLocation,
-    pipes,
+    pipes
   )
 
   let nodesToTest = [`${sLocation.row},${sLocation.col}`]
@@ -37,24 +35,13 @@ const runPart2 = input => {
   const { pipes, sLocation, dots } = parseInput(input)
   pipes[`${sLocation.row},${sLocation.col}`].connections = connectionsForS(
     sLocation,
-    pipes,
+    pipes
   )
 
   const gridHeight = input.length
   const gridWidth = input[0].length
 
-  // let lastCount = Object.keys(pipes).length
-  // let validPipes = pipes
-  // while (true) {
-  //   validPipes = removeInvalidPipes(validPipes)
-  //   if (Object.keys(validPipes).length === lastCount) {
-  //     break
-  //   }
-  //   lastCount = Object.keys(validPipes).length
-  // }
-  // console.log(validPipes)
-  const validPipes = pipes
-
+  // Find the path
   let nodesToTest = [`${sLocation.row},${sLocation.col}`]
   let visitedNodes = new Set()
   let distance = 0
@@ -64,7 +51,7 @@ const runPart2 = input => {
 
   while (nodesToTest.length > 0) {
     const node = nodesToTest.shift()
-    validPipes[node].distance = distance
+    pipes[node].distance = distance
     visitedNodes.add(node)
 
     if (prefix) {
@@ -74,9 +61,7 @@ const runPart2 = input => {
     }
     prefix = !prefix
 
-    const connects = validPipes[node].connections.filter(
-      c => !visitedNodes.has(c),
-    )
+    const connects = pipes[node].connections.filter(c => !visitedNodes.has(c))
     nextNodes = nextNodes.concat(connects)
 
     if (nodesToTest.length === 0) {
@@ -87,17 +72,17 @@ const runPart2 = input => {
   }
 
   path.pop()
-  // console.log(path)
 
-  let unused = new Set(Object.keys(validPipes).filter(p => !path.includes(p)))
+  // assemble set of every node not used by path
+  let unused = new Set(Object.keys(pipes).filter(p => !path.includes(p)))
   for (const dot of dots) {
     unused.add(dot)
   }
-  // console.log(unused)
 
+  // for each node in the path, work out which unused nodes are to the left and right
+  // mark these differently as one set will be the enclosed set and one wil be outside.
   let nodesToLeft = new Set()
   let nodesToRight = new Set()
-  printPipes(validPipes, gridHeight, gridWidth, nodesToLeft, nodesToRight, path)
 
   for (let index = 0; index < path.length; index++) {
     let nextIndex = index + 1
@@ -143,57 +128,47 @@ const runPart2 = input => {
       counter++
     }
   }
-  // printPipes(validPipes, gridHeight, gridWidth, nodesToLeft, nodesToRight)
 
-  // TODO: this is not filling the block in the middle
-  // fill in any remaining nodes surrounded by lefts or rights
-  // console.log(unused)
+  // for every node still unused, if it is touching a left or right node, add it to that set
   let unusedArr = Array.from(unused)
+  let foundMatch = false
 
   while (true) {
-    let foundMatch = false
+    unusedArr = Array.from(unused)
     for (const node of unusedArr) {
       const [r, c] = node.split(',')
       const surrounds = surroundingNodes(parseInt(r), parseInt(c))
       const surroundedByLefts = surrounds.filter(s => nodesToLeft.has(s))
-      if (surroundedByLefts >= 5) {
+      if (surroundedByLefts.length > 0) {
         nodesToLeft.add(node)
         unused.delete(node)
         foundMatch = true
       }
       const surroundedByRights = surrounds.filter(s => nodesToRight.has(s))
-      if (surroundedByRights >= 5) {
+      if (surroundedByRights.length > 0) {
         nodesToRight.add(node)
         unused.delete(node)
         foundMatch = true
       }
     }
-    if (!foundMatch) {
-      unusedArr = Array.from(unused)
+    if (!foundMatch || unused.size === 0) {
       break
     }
   }
 
-  const grid = printPipes(
-    validPipes,
+  printPipes(
+    pipes,
     gridHeight,
     gridWidth,
     nodesToLeft,
     nodesToRight,
     path,
+    unused
   )
 
-  let nLeftArr = Array.from(nodesToLeft).sort()
-  let nRightArr = Array.from(nodesToRight).sort()
-
-  // console.log('left', nLeftArr.length)
-  // console.log(nLeftArr)
-  // console.log('right', nRightArr.length)
-  // console.log(nRightArr)
-
   const totalNodes = gridHeight * gridWidth
-  const totalLeft = nLeftArr.length
-  const totalRight = nRightArr.length
+  const totalLeft = nodesToLeft.size
+  const totalRight = nodesToRight.size
   const pathLength = path.length
 
   console.log('total', totalNodes)
@@ -203,19 +178,10 @@ const runPart2 = input => {
   console.log('unused', unused.size)
   console.log('total check', totalLeft + totalRight + pathLength + unused.size)
 
-  const countInts = countInternals(grid)
-  console.log('countInts', countInts)
-
+  // one of left or right will be the enclosed set, most likely the smallest
   return Math.min(totalLeft, totalRight)
 
-  // 196 too low
-  // 395 too high
-  // 1149 too high
-  // 395 - 140 = 255 - wrong
-
   // 287
-
-  // Got by counting the nodes left unfilled in the center (91) and adding them to 196 which the code found.
 }
 
 const parseInput = input => {
@@ -327,75 +293,6 @@ const surroundingNodes = (row, col) => {
   return surrounds
 }
 
-const removeInvalidPipes = pipes => {
-  const coords = Object.keys(pipes)
-  const validPipes = {}
-
-  for (const coord of coords) {
-    if (pipes[coord].connections.length !== 2) {
-      return false
-    }
-
-    const connects = pipes[coord].connections.filter(c => {
-      if (!coords.includes(c)) {
-        return false
-      }
-
-      const connectedNodes = pipes[c].connections
-      if (!connectedNodes.includes(coord)) {
-        return false
-      }
-      return true
-    })
-
-    if (connects.length === 2) {
-      validPipes[coord] = pipes[coord]
-    }
-  }
-
-  return validPipes
-}
-
-const countInternals = grid => {
-  let totalI = 0
-  let totalO = 0
-
-  const rows = grid.split('\n')
-  for (let row = 1; row < rows.length - 1; row++) {
-    const cols = rows[row].split('')
-    let startIndex = Math.max(rows[row].indexOf('='), 1)
-    let endIndex = Math.min(rows[row].lastIndexOf('='), cols.length - 1)
-
-    for (let col = startIndex; col < endIndex; col++) {
-      const symbol = cols[col]
-      if (symbol !== 'I' && symbol !== 'O') {
-        continue
-      }
-
-      const invalidNeighbors = [
-        rows[row - 1][col - 1],
-        rows[row - 1][col],
-        rows[row - 1][col + 1],
-        rows[row][col - 1],
-        rows[row][col + 1],
-        rows[row + 1][col - 1],
-        rows[row + 1][col],
-        rows[row + 1][col + 1],
-      ].filter(n => n !== '=' && n !== symbol)
-
-      if (invalidNeighbors.length === 0) {
-        if (symbol === 'I') {
-          totalI++
-        } else {
-          totalO++
-        }
-      }
-    }
-  }
-
-  return { totalI, totalO }
-}
-
 const printPipes = (
   pipes,
   gridHeight,
@@ -403,6 +300,7 @@ const printPipes = (
   nodesToLeft,
   nodesToRight,
   path,
+  unused
 ) => {
   let gridStr = ''
   for (let row = 0; row < gridHeight; row++) {
@@ -415,6 +313,8 @@ const printPipes = (
         rowStr += 'O'
       } else if (path && path.includes(coord)) {
         rowStr += '='
+      } else if (unused && unused.has(coord)) {
+        rowStr += '?'
       } else {
         rowStr += pipes[coord] ? pipes[coord].symbol : '.'
       }
